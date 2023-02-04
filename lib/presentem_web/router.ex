@@ -18,6 +18,7 @@ defmodule PresentemWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :index
+    get "/slides", PageController, :index
   end
 
   # Other scopes may use custom stacks.
