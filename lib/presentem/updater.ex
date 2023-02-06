@@ -72,7 +72,7 @@ defmodule Presentem.Updater do
             destination = Path.join(@root_path, file_name)
             File.cp!(source, destination)
 
-            Rambo.run("npx", ["marp", file_name], cd: @root_path)
+            Rambo.run("npx", ["marp", "--html", file_name], cd: @root_path)
 
             File.rm!(destination)
           end
