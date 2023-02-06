@@ -38,7 +38,7 @@ defmodule Presentem.Updater do
 
           File.cp!(source, destination)
 
-          Rambo.run("npx", ["marp", file_name], cd: @root_path)
+          Rambo.run("npx", ["marp", "--htmml", file_name], cd: @root_path)
 
           File.rm!(destination)
         end
