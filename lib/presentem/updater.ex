@@ -74,6 +74,23 @@ defmodule Presentem.Updater do
 
             Rambo.run("npx", ["marp", "--html", file_name], cd: @root_path)
 
+            live_md_content =
+              destination
+              |> File.read!()
+              |> String.split("---")
+              |> Enum.filter(fn slide -> String.contains?(slide, "```elixir") end)
+              |> Enum.join("")
+              |> String.trim()
+
+            if live_md_content != "" do
+              title = slide_title(String.replace_suffix(file_name, ".md", ".html"))
+
+              live_md_content = "# #{title}\n\n#{live_md_content}"
+
+              livemd_destination = String.replace_suffix(destination, ".md", ".livemd")
+              File.write!(livemd_destination, live_md_content)
+            end
+
             File.rm!(destination)
           end
 
@@ -81,37 +98,54 @@ defmodule Presentem.Updater do
             destination = Path.join(@root_path, Path.join("assets", file_name))
             File.cp!(source, destination)
           end
-
-          # Recreate index.html
-          slide_data =
-            @root_path
-            |> File.ls!()
-            |> Enum.filter(&String.ends_with?(&1, ".html"))
-            |> Enum.reject(&(&1 == "index.html"))
-            |> Enum.map(&{&1, File.stat!(Path.join(@root_path, &1))})
-            |> Enum.sort_by(fn {_, %{ctime: ctime}} -> ctime end)
-            |> Enum.map(fn {file_name, stats} ->
-              html = File.read!(Path.join(@root_path, file_name))
-
-              h1s = Regex.scan(~r/(<h1.*?>(.*?)<\/h1>)/, html)
-              titles = List.first(h1s) || Regex.scan(~r/(<h2.*?>(.*?)<\/h2>)/, html) |> List.first()
-
-              title =
-                if is_list(titles) && !Enum.empty?(titles) do
-                  List.last(titles)
-                else
-                  String.trim_trailing(file_name)
-                end
-
-                {Path.join("/slides", file_name), title, stats}
-            end)
-
-
-          html = Phoenix.View.render_to_string(PresentemWeb.PageView, "index.html", [slide_data: slide_data, layout: {PresentemWeb.LayoutView, "root.html"}])
-          File.write!(Path.join(@root_path, "index.html"), html)
         end)
+
+        # Recreate index.html
+        slide_data =
+          @root_path
+          |> File.ls!()
+          |> Enum.filter(&String.ends_with?(&1, ".html"))
+          |> Enum.reject(&(&1 == "index.html"))
+          |> Enum.map(&{&1, File.stat!(Path.join(@root_path, &1))})
+          |> Enum.sort_by(fn {_, %{ctime: ctime}} -> ctime end)
+          |> Enum.map(fn {file_name, stats} ->
+            title = slide_title(file_name)
+
+            livemd_file = String.replace_suffix(file_name, ".html", ".livemd")
+            livemd_path= Path.join(@root_path, livemd_file)
+
+            livemd_location =
+              if File.exists?(livemd_path) do
+                Path.join("/slides", livemd_file)
+              else
+                :no_live_md
+              end
+
+            {Path.join("/slides", file_name), title, stats, livemd_location}
+          end)
+
+        html =
+          Phoenix.View.render_to_string(PresentemWeb.PageView, "index.html",
+            slide_data: slide_data,
+            layout: {PresentemWeb.LayoutView, "root.html"}
+          )
+
+        File.write!(Path.join(@root_path, "index.html"), html)
     end
 
     {:noreply, state}
+  end
+
+  defp slide_title(file_name) do
+    html = File.read!(Path.join(@root_path, file_name))
+
+    h1s = Regex.scan(~r/(<h1.*?>(.*?)<\/h1>)/, html)
+    titles = List.first(h1s) || Regex.scan(~r/(<h2.*?>(.*?)<\/h2>)/, html) |> List.first()
+
+    if is_list(titles) && !Enum.empty?(titles) do
+      List.last(titles)
+    else
+      String.trim_trailing(file_name)
+    end
   end
 end

@@ -1,6 +1,9 @@
-<%= for {location, title, _stats} <- assigns.slide_data do %>
+<%= for {location, title, _stats, livemd_location} <- assigns.slide_data do %>
   <h3><%= title %></h3>
   <ul>
     <li><%= link("Презентация", to: location) %></li>
+    <%= if livemd_location != :no_live_md do %>
+      <li><%= link("LiveBook код", to: livemd_location) %></li>
+    <% end %>
   </ul>
 <% end %>
