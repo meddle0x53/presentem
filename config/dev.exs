@@ -29,7 +29,9 @@ config :presentem, PresentemWeb.Endpoint,
     ]
   ]
 
-config :presentem, repository_url: "git@github.com:meddle0x53/presentem_test.git"
+config :presentem,
+  repository_url: "test_files",
+  repository_provider: Presentem.RepositoryProviders.Local
 
 config :logger, :console, format: "[$level] $message\n"
 

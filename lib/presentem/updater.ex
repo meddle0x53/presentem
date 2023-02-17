@@ -112,7 +112,7 @@ defmodule Presentem.Updater do
             title = slide_title(file_name)
 
             livemd_file = String.replace_suffix(file_name, ".html", ".livemd")
-            livemd_path= Path.join(@root_path, livemd_file)
+            livemd_path = Path.join(@root_path, livemd_file)
 
             livemd_location =
               if File.exists?(livemd_path) do

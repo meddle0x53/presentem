@@ -4,7 +4,7 @@ defmodule Presentem.MixProject do
   def project do
     [
       app: :presentem,
-      version: "0.2.0",
+      version: "0.2.1",
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
@@ -38,6 +38,7 @@ defmodule Presentem.MixProject do
       {:phoenix_html, "~> 3.0"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:phoenix_live_view, "~> 0.17.5"},
+      {:file_system, "~> 0.2"},
       {:floki, ">= 0.30.0", only: :test},
       {:esbuild, "~> 0.4", runtime: Mix.env() == :dev},
       {:telemetry_metrics, "~> 0.6"},
