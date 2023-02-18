@@ -48,6 +48,7 @@ defmodule Presentem.Updater do
       File.mkdir_p!(destination_assets)
     end
 
+    rebuild_index()
     :timer.send_interval(25_000, :poll_repository)
 
     {:noreply, state}
@@ -101,39 +102,43 @@ defmodule Presentem.Updater do
         end)
 
         # Recreate index.html
-        slide_data =
-          @root_path
-          |> File.ls!()
-          |> Enum.filter(&String.ends_with?(&1, ".html"))
-          |> Enum.reject(&(&1 == "index.html"))
-          |> Enum.map(&{&1, File.stat!(Path.join(@root_path, &1))})
-          |> Enum.sort_by(fn {_, %{ctime: ctime}} -> ctime end)
-          |> Enum.map(fn {file_name, stats} ->
-            title = slide_title(file_name)
-
-            livemd_file = String.replace_suffix(file_name, ".html", ".livemd")
-            livemd_path = Path.join(@root_path, livemd_file)
-
-            livemd_location =
-              if File.exists?(livemd_path) do
-                Path.join("/slides", livemd_file)
-              else
-                :no_live_md
-              end
-
-            {Path.join("/slides", file_name), title, stats, livemd_location}
-          end)
-
-        html =
-          Phoenix.View.render_to_string(PresentemWeb.PageView, "index.html",
-            slide_data: slide_data,
-            layout: {PresentemWeb.LayoutView, "root.html"}
-          )
-
-        File.write!(Path.join(@root_path, "index.html"), html)
+        rebuild_index()
     end
 
     {:noreply, state}
+  end
+
+  defp rebuild_index do
+    slide_data =
+      @root_path
+      |> File.ls!()
+      |> Enum.filter(&String.ends_with?(&1, ".html"))
+      |> Enum.reject(&(&1 == "index.html"))
+      |> Enum.map(&{&1, File.stat!(Path.join(@root_path, &1))})
+      |> Enum.sort_by(fn {_, %{ctime: ctime}} -> ctime end)
+      |> Enum.map(fn {file_name, stats} ->
+        title = slide_title(file_name)
+
+        livemd_file = String.replace_suffix(file_name, ".html", ".livemd")
+        livemd_path = Path.join(@root_path, livemd_file)
+
+        livemd_location =
+          if File.exists?(livemd_path) do
+            Path.join("/slides", livemd_file)
+          else
+            :no_live_md
+          end
+
+        {Path.join("/slides", file_name), title, stats, livemd_location}
+      end)
+
+    html =
+      Phoenix.View.render_to_string(PresentemWeb.PageView, "index.html",
+        slide_data: slide_data,
+        layout: {PresentemWeb.LayoutView, "root.html"}
+      )
+
+    File.write!(Path.join(@root_path, "index.html"), html)
   end
 
   defp slide_title(file_name) do
