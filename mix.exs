@@ -4,7 +4,7 @@ defmodule Presentem.MixProject do
   def project do
     [
       app: :presentem,
-      version: "0.2.2",
+      version: "0.2.3",
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
@@ -14,9 +14,6 @@ defmodule Presentem.MixProject do
     ]
   end
 
-  # Configuration for the OTP application.
-  #
-  # Type `mix help compile.app` for more information.
   def application do
     [
       mod: {Presentem.Application, []},

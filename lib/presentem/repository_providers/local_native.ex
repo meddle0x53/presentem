@@ -1,4 +1,4 @@
-defmodule Presentem.RepositoryProviders.Local do
+defmodule Presentem.RepositoryProviders.LocalNative do
   use GenServer
 
   require Logger
@@ -63,54 +63,62 @@ defmodule Presentem.RepositoryProviders.Local do
     GenServer.start_link(__MODULE__, args)
   end
 
-  def init(args) do
-    {:ok, watcher_pid} = FileSystem.start_link(args)
-
-    FileSystem.subscribe(watcher_pid)
-    {:ok, %{watcher_pid: watcher_pid, changes: []}}
+  def init(_args) do
+    {:ok, %{changes: [], current_state: []}, {:continue, :start_watching_local_path}}
   end
 
-  def handle_info(
-        {:file_event, watcher_pid, {path, events}},
-        %{watcher_pid: watcher_pid, changes: changes} = state
-      )
-      when events in [[:modified], [:modified, :closed], [:created]] do
-    path_parts =
-      path
-      |> String.split("/")
-      |> Enum.reverse()
+  def handle_continue(:start_watching_local_path, state) do
+    :timer.send_interval(10_000, :check_local_path)
+    {:noreply, %{state | current_state: local_state()}}
+  end
 
-    case path_parts do
-      [file, "presentations" | _] ->
-        if String.ends_with?(file, ".md") do
-          new_changes = [Path.join("presentations", file) | changes]
+  def handle_info(:check_local_path, %{current_state: current_state} = state) do
+    files = local_state()
 
-          {:noreply, %{state | changes: Enum.uniq(new_changes)}}
-        else
-          {:noreply, state}
+    updates = ((current_state -- files) ++ (files -- current_state)) |> Enum.map(fn {file, _} -> file end)
+
+    new_state =
+      Enum.reduce(updates, state, fn path, %{changes: changes} = acc ->
+        path_parts =
+          path
+          |> String.split("/")
+          |> Enum.reverse()
+
+        case path_parts do
+          [file, "presentations" | _] ->
+            if String.ends_with?(file, ".md") do
+              new_changes = [Path.join("presentations", file) | changes]
+
+              %{acc | changes: Enum.uniq(new_changes)}
+            else
+              acc
+            end
+
+          [file, "assets" | _] ->
+            new_changes = [Path.join("assets", file) | changes]
+            %{acc | changes: Enum.uniq(new_changes)}
+
+          _ ->
+            acc
         end
+      end)
 
-      [file, "assets" | _] ->
-        new_changes = [Path.join("assets", file) | changes]
-        {:noreply, %{state | changes: Enum.uniq(new_changes)}}
-
-      _ ->
-        {:noreply, state}
-    end
-  end
-
-  def handle_info(
-        {:file_event, watcher_pid, {_path, _events}},
-        %{watcher_pid: watcher_pid} = state
-      ) do
-    {:noreply, state}
-  end
-
-  def handle_info({:file_event, watcher_pid, :stop}, %{watcher_pid: watcher_pid} = state) do
-    {:noreply, state}
+    {:noreply, new_state}
   end
 
   def handle_call(:get_changes_and_reset, _from, %{changes: changes} = state) do
     {:reply, changes, %{state | changes: []}}
   end
+
+  defp local_state do
+    files = list_files("")
+
+    Enum.map(files, fn file_path ->
+      file = Path.join(@local_path, file_path)
+      %{mtime: mtime} = File.stat!(file)
+
+      {file, mtime}
+    end)
+  end
+
 end
