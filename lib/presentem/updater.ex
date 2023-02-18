@@ -5,14 +5,15 @@ defmodule Presentem.Updater do
 
   @root_path "_presentations"
 
+  @rebuild_index_delay 5_000
+  @update_interval 30_000
+
   @spec start_link([module]) :: GenServer.on_start()
   def start_link([repository_provider]) do
     GenServer.start_link(__MODULE__, repository_provider, name: __MODULE__)
   end
 
   def init(repository_provider) do
-    {:ok, repository_provider}
-
     {:ok, %{provider: repository_provider, repo: repository_provider.repository()},
      {:continue, :start_polling_repository}}
   end
@@ -38,10 +39,8 @@ defmodule Presentem.Updater do
 
           File.cp!(source, destination)
 
-          # Rambo.run("npx", ["marp", "--html", file_name], cd: @root_path)
-
-          port = Port.open({:spawn, "npx marp --html #{destination}"}, [])
-          Port.command(port, "\n")
+          output = String.replace_suffix(destination, ".md", ".html")
+          port = Port.open({:spawn, "npx marp #{source} --html -o #{output}"}, [])
           Port.close(port)
 
           File.rm!(destination)
@@ -52,8 +51,14 @@ defmodule Presentem.Updater do
       File.mkdir_p!(destination_assets)
     end
 
+    :timer.send_interval(@update_interval, :poll_repository)
+    Process.send_after(self(), :rebuild_index, @rebuild_index_delay)
+
+    {:noreply, state}
+  end
+
+  def handle_info(:rebuild_index, state) do
     rebuild_index()
-    :timer.send_interval(25_000, :poll_repository)
 
     {:noreply, state}
   end
@@ -77,10 +82,8 @@ defmodule Presentem.Updater do
             destination = Path.join(@root_path, file_name)
             File.cp!(source, destination)
 
-            # Rambo.run("npx", ["marp", "--html", file_name], cd: @root_path)
-
-            port = Port.open({:spawn, "npx marp --html #{destination}"}, [])
-            Port.command(port, "\n")
+            output = String.replace_suffix(destination, ".md", ".html")
+            port = Port.open({:spawn, "npx marp #{source} --html -o #{output}"}, [])
             Port.close(port)
 
             live_md_content =
@@ -110,7 +113,7 @@ defmodule Presentem.Updater do
         end)
 
         # Recreate index.html
-        rebuild_index()
+        Process.send_after(self(), :rebuild_index, @rebuild_index_delay)
     end
 
     {:noreply, state}

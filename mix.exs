@@ -42,8 +42,7 @@ defmodule Presentem.MixProject do
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
       {:plug_cowboy, "~> 2.5"},
-      {:plug_static_index_html, "~> 1.0"},
-      {:rambo, "~> 0.3"}
+      {:plug_static_index_html, "~> 1.0"}
     ]
   end
 
