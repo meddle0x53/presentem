@@ -75,7 +75,10 @@ defmodule Presentem.RepositoryProviders.LocalNative do
   def handle_info(:check_local_path, %{current_state: current_state} = state) do
     files = local_state()
 
-    updates = ((current_state -- files) ++ (files -- current_state)) |> Enum.map(fn {file, _} -> file end)
+    updates =
+      ((current_state -- files) ++ (files -- current_state))
+      |> Enum.map(fn {file, _} -> file end)
+      |> Enum.uniq()
 
     new_state =
       Enum.reduce(updates, state, fn path, %{changes: changes} = acc ->
@@ -103,7 +106,7 @@ defmodule Presentem.RepositoryProviders.LocalNative do
         end
       end)
 
-    {:noreply, new_state}
+    {:noreply, %{new_state | current_state: files}}
   end
 
   def handle_call(:get_changes_and_reset, _from, %{changes: changes} = state) do
@@ -120,5 +123,4 @@ defmodule Presentem.RepositoryProviders.LocalNative do
       {file, mtime}
     end)
   end
-
 end

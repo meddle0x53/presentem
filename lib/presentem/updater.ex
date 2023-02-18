@@ -38,7 +38,11 @@ defmodule Presentem.Updater do
 
           File.cp!(source, destination)
 
-          Rambo.run("npx", ["marp", "--html", file_name], cd: @root_path)
+          # Rambo.run("npx", ["marp", "--html", file_name], cd: @root_path)
+
+          port = Port.open({:spawn, "npx marp --html #{destination}"}, [])
+          Port.command(port, "\n")
+          Port.close(port)
 
           File.rm!(destination)
         end
@@ -73,7 +77,11 @@ defmodule Presentem.Updater do
             destination = Path.join(@root_path, file_name)
             File.cp!(source, destination)
 
-            Rambo.run("npx", ["marp", "--html", file_name], cd: @root_path)
+            # Rambo.run("npx", ["marp", "--html", file_name], cd: @root_path)
+
+            port = Port.open({:spawn, "npx marp --html #{destination}"}, [])
+            Port.command(port, "\n")
+            Port.close(port)
 
             live_md_content =
               destination
