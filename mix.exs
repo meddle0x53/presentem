@@ -4,7 +4,7 @@ defmodule Presentem.MixProject do
   def project do
     [
       app: :presentem,
-      version: "0.2.3",
+      version: "0.2.4",
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
@@ -21,7 +21,6 @@ defmodule Presentem.MixProject do
     ]
   end
 
-  # Specifies which paths to compile per environment.
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_), do: ["lib"]
 
