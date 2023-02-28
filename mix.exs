@@ -4,7 +4,7 @@ defmodule Presentem.MixProject do
   def project do
     [
       app: :presentem,
-      version: "0.2.4",
+      version: "0.2.5",
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),
@@ -40,6 +40,7 @@ defmodule Presentem.MixProject do
       {:telemetry_metrics, "~> 0.6"},
       {:telemetry_poller, "~> 1.0"},
       {:jason, "~> 1.2"},
+      {:logger_file_backend, "0.0.9"},
       {:plug_cowboy, "~> 2.5"},
       {:plug_static_index_html, "~> 1.0"}
     ]

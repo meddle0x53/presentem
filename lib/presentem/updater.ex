@@ -91,7 +91,7 @@ defmodule Presentem.Updater do
               |> Enum.filter(fn slide -> String.contains?(slide, "```elixir") end)
               |> Enum.join("")
               |> String.trim()
-              |> IO.inspect()
+
 
             if live_md_content != "" do
               title = slide_title(String.replace_suffix(file_name, ".md", ".html"))
@@ -99,7 +99,11 @@ defmodule Presentem.Updater do
               live_md_content = "# #{title}\n\n#{live_md_content}"
 
               livemd_destination = String.replace_suffix(destination, ".md", ".livemd")
+              Logger.info("Writing livemd to #{livemd_destination}")
+
               File.write!(livemd_destination, live_md_content)
+            else
+              Logger.warn("No livemd content")
             end
           end
 
