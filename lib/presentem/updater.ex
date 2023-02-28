@@ -46,7 +46,7 @@ defmodule Presentem.Updater do
         if String.ends_with?(file_name, ".md") do
           source = Path.join(source_presentations, file_name)
           destination = Path.join(@root_path, file_name)
-          {:ok, _md_content} = generate_presentation_and_return_content(source, destination)
+          {:ok, _md_content, _} = generate_presentation_and_return_content(source, destination)
         end
       end)
 
@@ -84,14 +84,15 @@ defmodule Presentem.Updater do
 
           if source =~ ~r/^.*\/presentations\/.*\.md$/ do
             destination = Path.join(@root_path, file_name)
-            {:ok, md_content} = generate_presentation_and_return_content(source, destination)
+
+            {:ok, md_content, file_name} =
+              generate_presentation_and_return_content(source, destination)
 
             live_md_content =
               md_content
               |> Enum.filter(fn slide -> String.contains?(slide, "```elixir") end)
               |> Enum.join("")
               |> String.trim()
-
 
             if live_md_content != "" do
               title = slide_title(String.replace_suffix(file_name, ".md", ".html"))
@@ -156,7 +157,11 @@ defmodule Presentem.Updater do
     port = Port.open({:spawn, "npx marp #{source} --html -o #{output}"}, [])
     Port.close(port)
 
-    {:ok, md_content}
+    wait_for_output(output)
+
+    file_name = Path.basename(output)
+
+    {:ok, md_content, file_name}
   end
 
   defp rebuild_index do
@@ -207,6 +212,17 @@ defmodule Presentem.Updater do
       List.last(titles)
     else
       String.trim_trailing(file_name)
+    end
+  end
+
+  defp wait_for_output(path) do
+    if File.exists?(path) do
+      :ok
+    else
+      Logger.info("Waiting for output file #{path}")
+
+      Process.sleep(100)
+      wait_for_output(path)
     end
   end
 end
