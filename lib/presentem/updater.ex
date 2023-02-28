@@ -91,6 +91,7 @@ defmodule Presentem.Updater do
               |> Enum.filter(fn slide -> String.contains?(slide, "```elixir") end)
               |> Enum.join("")
               |> String.trim()
+              |> IO.inspect()
 
             if live_md_content != "" do
               title = slide_title(String.replace_suffix(file_name, ".md", ".html"))
