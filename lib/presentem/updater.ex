@@ -38,7 +38,7 @@ defmodule Presentem.Updater do
       destination_assets = Path.join(@root_path, "assets")
       File.cp_r!(source_assets, destination_assets)
 
-      source_presentations = Path.join(provider.local_path(), "presentations")
+      source_presentations = provider.local_path()
 
       source_presentations
       |> File.ls!()
@@ -82,7 +82,9 @@ defmodule Presentem.Updater do
           file_name = Path.basename(update)
           source = Path.join(provider.local_path(), update)
 
-          if source =~ ~r/^.*\/presentations\/.*\.md$/ do
+          IO.inspect(source)
+
+          if source =~ ~r/^.*\.md$/ do
             destination = Path.join(@root_path, file_name)
 
             {:ok, md_content, file_name} =

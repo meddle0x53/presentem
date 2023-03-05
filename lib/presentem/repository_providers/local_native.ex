@@ -88,18 +88,18 @@ defmodule Presentem.RepositoryProviders.LocalNative do
           |> Enum.reverse()
 
         case path_parts do
-          [file, "presentations" | _] ->
+          [file, "assets" | _] ->
+            new_changes = [Path.join("assets", file) | changes]
+            %{acc | changes: Enum.uniq(new_changes)}
+
+          [file, _] ->
             if String.ends_with?(file, ".md") do
-              new_changes = [Path.join("presentations", file) | changes]
+              new_changes = [file | changes]
 
               %{acc | changes: Enum.uniq(new_changes)}
             else
               acc
             end
-
-          [file, "assets" | _] ->
-            new_changes = [Path.join("assets", file) | changes]
-            %{acc | changes: Enum.uniq(new_changes)}
 
           _ ->
             acc

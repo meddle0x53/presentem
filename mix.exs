@@ -4,7 +4,7 @@ defmodule Presentem.MixProject do
   def project do
     [
       app: :presentem,
-      version: "0.2.5",
+      version: "0.2.6",
       elixir: "~> 1.12",
       elixirc_paths: elixirc_paths(Mix.env()),
       compilers: Mix.compilers(),

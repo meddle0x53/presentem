@@ -13,9 +13,12 @@ config :presentem, PresentemWeb.Endpoint,
   cache_static_manifest: "priv/static/cache_manifest.json",
   server: true
 
-config :logger, level: :info, format: "[$level] $message\n",
+config :logger,
+  level: :info,
+  format: "[$level] $message\n",
   backends: [
-    { LoggerFileBackend, :error_log }, { LoggerFileBackend, :info_log },
+    {LoggerFileBackend, :error_log},
+    {LoggerFileBackend, :info_log},
     :console
   ]
 
